@@ -56,7 +56,18 @@
       gap: 12px;
     }
     header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .02em; }
-    header p  { font-size: .82rem; opacity: .7; }
+    header p  { font-size: .82rem; opacity: .7; flex: 1; }
+    .gen-link {
+      font-size: .82rem;
+      color: rgba(255,255,255,.8);
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.35);
+      padding: 3px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .gen-link:hover { background: rgba(255,255,255,.15); color: white; }
 
     /* ── Setup panel ───────────────────────────────────────────────────── */
     #setup-panel {
@@ -508,6 +519,7 @@
   <header>
     <h1>Natural Deduction Proof Checker</h1>
     <p>Sentential Logic</p>
+    <a class="gen-link" href="problems1.html">Problem Generator →</a>
   </header>
 
   <!-- ── Setup panel ────────────────────────────────────────────────────── -->
@@ -1726,8 +1738,23 @@ function _hideEntryError() { if(_entryErrEl){_entryErrEl.remove();_entryErrEl=nu
   conInput.addEventListener('focus', ()=>{ trackFocus(conInput); });
   conInput.addEventListener('input', ()=>normalizeField(conInput));
 
-  // Start with one blank premise field
-  addPremiseField();
+  // ── Load a problem from URL parameters (sent by problems1.html) ──────────
+  // URL format: index.html?p=A+%E2%8A%83+B&p=B+%E2%8A%83+C&c=A+%E2%8A%83+C
+  (function loadFromURL() {
+    const params  = new URLSearchParams(window.location.search);
+    const prems   = params.getAll('p');
+    const conc    = params.get('c');
+    if (!prems.length || !conc) {
+      // No URL problem — start with one blank premise field as normal
+      addPremiseField();
+      return;
+    }
+    // Fill in the premise fields from URL
+    prems.forEach(p => addPremiseField(p));
+    document.getElementById('conclusion-input').value = conc;
+    // Launch the proof automatically so the student lands straight in proof mode
+    startProof();
+  })();
 })();
 </script>
 </body>
