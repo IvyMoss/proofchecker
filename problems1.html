@@ -226,6 +226,35 @@
       font-family: system-ui;
     }
 
+    .argument-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .argument-table th,
+    .argument-table td {
+      padding: 2px 8px;
+      text-align: left;
+      vertical-align: baseline;
+    }
+
+    .argument-table th {
+      width: 1%;
+      white-space: nowrap;
+      font-family: system-ui, sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--gray-500);
+    }
+
+    .argument-table .conclusion-row th,
+    .argument-table .conclusion-row td {
+      border-top: 1px solid var(--gray-300);
+      padding-top: 8px;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
     /* ── Actions ──────────────────────────────────────────────────────── */
     .actions {
       display: flex;
@@ -479,6 +508,14 @@
       };
     }
 
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function generateProblem() {
       const bank = problems[currentRules][currentDiff];
       const template = bank[Math.floor(Math.random() * bank.length)];
@@ -486,19 +523,20 @@
 
       // Render HTML
       const displayArea = document.getElementById('problem-content');
-      let html = '';
+      let html = '<table class="argument-table" aria-label="Generated argument"><tbody>';
 
       activeProblem.p.forEach((prem, idx) => {
-        html += `<div class="premise-line">
-               <span class="premise-num">${idx + 1}.</span> 
-               <span>${prem}</span>
-             </div>`;
+        html += `<tr>
+               <th scope="row">Premise ${idx + 1}</th>
+               <td>${esc(prem)}</td>
+             </tr>`;
       });
 
-      html += `<div class="conclusion-line">
-             <span class="conclusion-slash">/</span> 
-             <span>${activeProblem.c}</span>
-           </div>`;
+      html += `<tr class="conclusion-row">
+             <th scope="row">Conclusion</th>
+             <td><span class="conclusion-slash">/</span> ${esc(activeProblem.c)}</td>
+           </tr>`;
+      html += '</tbody></table>';
 
       displayArea.innerHTML = html;
 

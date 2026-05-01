@@ -391,6 +391,35 @@
       padding-left: 0;
     }
 
+    .argument-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .argument-table th,
+    .argument-table td {
+      padding: 2px 8px;
+      text-align: left;
+      vertical-align: baseline;
+    }
+
+    .argument-table th {
+      width: 1%;
+      white-space: nowrap;
+      font-family: system-ui, sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--gray-500);
+    }
+
+    .argument-table .conclusion-row th,
+    .argument-table .conclusion-row td {
+      border-top: 1px solid var(--gray-300);
+      padding-top: 8px;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
     /* ── Technique notice ────────────────────────────────────────────── */
     .tech-notice {
       display: flex;
@@ -762,24 +791,19 @@
 
       // ── Argument display ─────────────────────────────────────────────────
       const display = document.getElementById('prob-display');
-      let html = '';
+      let html = '<table class="argument-table" aria-label="Generated argument"><tbody>';
 
-      if (premises.length === 0) {
-        html = '<div class="prob-row prob-row-conc-only">'
-          + '<span class="prob-conc"><span class="prob-slash">/</span> ' + _esc(conclusion) + '</span>'
-          + '</div>';
-      } else {
-        premises.forEach((p, i) => {
-          const isLast = (i === premises.length - 1);
-          html += '<div class="prob-row">'
-            + '<span class="prob-num">' + (i + 1) + '.</span>'
-            + '<span class="prob-formula">' + _esc(p) + '</span>';
-          if (isLast) {
-            html += '<span class="prob-conc"><span class="prob-slash">/</span> ' + _esc(conclusion) + '</span>';
-          }
-          html += '</div>';
-        });
-      }
+      premises.forEach((p, i) => {
+        html += '<tr>'
+          + '<th scope="row">Premise ' + (i + 1) + '</th>'
+          + '<td>' + _esc(p) + '</td>'
+          + '</tr>';
+      });
+      html += '<tr class="conclusion-row">'
+        + '<th scope="row">Conclusion</th>'
+        + '<td><span class="prob-slash">/</span> ' + _esc(conclusion) + '</td>'
+        + '</tr>';
+      html += '</tbody></table>';
       display.innerHTML = html;
 
       // ── Technique notice (CP / IP) ───────────────────────────────────────
