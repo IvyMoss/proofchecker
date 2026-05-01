@@ -313,11 +313,13 @@
       padding: 16px 0;
     }
 
+    .proof-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     .proof-line {
-      display: flex;
-      align-items: flex-start;
       padding: 3px 20px 3px 0;
-      gap: 0;
       transition: background .1s;
     }
 
@@ -336,13 +338,33 @@
       font-variant-numeric: tabular-nums;
       font-family: ui-monospace, monospace;
       user-select: none;
+      vertical-align: top;
     }
 
     .line-body {
-      flex: 1;
       min-width: 0;
       border-left: 3px solid transparent;
       padding-left: 10px;
+      vertical-align: top;
+      width: 100%;
+    }
+
+    .line-just-cell,
+    .line-status-cell {
+      vertical-align: top;
+      padding-top: 4px;
+      white-space: nowrap;
+    }
+
+    .line-just-cell {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    .line-status-cell {
+      width: 32px;
+      text-align: right;
+      padding-right: 20px;
     }
 
     .line-body.depth-1 {
@@ -422,6 +444,10 @@
       border-radius: 4px;
       line-height: 1.4;
       font-family: system-ui, sans-serif;
+    }
+
+    .line-error[hidden] {
+      display: none;
     }
 
     .line-tag {
@@ -705,6 +731,18 @@
     }
 
     /* ── Utility ───────────────────────────────────────────────────────── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     [hidden] {
       display: none !important;
     }
@@ -750,29 +788,29 @@
         <h2>New Proof</h2>
 
         <!-- Operator toolbar for setup screen -->
-        <div class="sym-bar sym-bar-setup">
-          <button class="sym-btn" type="button" onclick="ins('~')" title="Negation (~)">~</button>
-          <button class="sym-btn" type="button" onclick="ins('·')" title="Conjunction (·) — also type &amp;">·</button>
-          <button class="sym-btn" type="button" onclick="ins('∨')" title="Disjunction (∨) — also type v">∨</button>
-          <button class="sym-btn" type="button" onclick="ins('⊃')" title="Conditional (⊃) — also type ->">⊃</button>
+        <div class="sym-bar sym-bar-setup" role="toolbar" aria-label="Formula symbols">
+          <button class="sym-btn" type="button" onclick="ins('~')" title="Negation (~)" aria-label="Insert negation">~</button>
+          <button class="sym-btn" type="button" onclick="ins('·')" title="Conjunction (·) — also type &amp;" aria-label="Insert conjunction">·</button>
+          <button class="sym-btn" type="button" onclick="ins('∨')" title="Disjunction (∨) — also type v" aria-label="Insert disjunction">∨</button>
+          <button class="sym-btn" type="button" onclick="ins('⊃')" title="Conditional (⊃) — also type ->" aria-label="Insert conditional">⊃</button>
           <button class="sym-btn" type="button" onclick="ins('≡')"
-            title="Biconditional (≡) — also type &lt;->">≡</button>
+            title="Biconditional (≡) — also type &lt;->" aria-label="Insert biconditional">≡</button>
           <div class="sym-divider"></div>
-          <button class="sym-btn" type="button" onclick="ins('(')" title="Open parenthesis">(</button>
-          <button class="sym-btn" type="button" onclick="ins(')')" title="Close parenthesis">)</button>
+          <button class="sym-btn" type="button" onclick="ins('(')" title="Open parenthesis" aria-label="Insert open parenthesis">(</button>
+          <button class="sym-btn" type="button" onclick="ins(')')" title="Close parenthesis" aria-label="Insert close parenthesis">)</button>
         </div>
 
-        <label class="field-label">Premises</label>
+        <div class="field-label" id="premises-label">Premises</div>
         <div id="premise-list"></div>
         <button class="btn-add-premise" type="button" onclick="addPremiseField()">+ Add another premise</button>
 
-        <label class="field-label">Conclusion</label>
+        <label class="field-label" for="conclusion-input">Conclusion</label>
         <input id="conclusion-input" class="formula-input" type="text" placeholder="e.g. A ⊃ (B · C)"
-          onkeydown="if(event.key==='Enter') startProof()">
+          aria-describedby="setup-hint setup-error" onkeydown="if(event.key==='Enter') startProof()">
 
         <button class="btn-primary" type="button" onclick="startProof()">Begin Proof →</button>
 
-        <div class="setup-hint">
+        <div class="setup-hint" id="setup-hint">
           <strong>Tip:</strong> Click an operator button above, or type shortcuts:
           <kbd>-&gt;</kbd> for ⊃ &nbsp; <kbd>&amp;</kbd> for · &nbsp; <kbd>v</kbd> for ∨ &nbsp; <kbd>&lt;-&gt;</kbd> for
           ≡.
@@ -780,6 +818,7 @@
           Parentheses are required around each embedded connective: write <kbd>A ⊃ (B · C)</kbd>, not <kbd>A ⊃ B ·
             C</kbd>.
         </div>
+        <div id="setup-error" class="line-error" role="alert" hidden></div>
       </div>
     </section>
 
@@ -794,42 +833,53 @@
 
       <!-- Proof lines (scrollable) -->
       <div id="proof-scroll">
-        <div id="complete-banner">✓ Proof complete!</div>
+        <div id="complete-banner" role="status" aria-live="polite">✓ Proof complete!</div>
         <div id="scope-indicator"></div>
-        <div id="proof-lines"></div>
+        <table class="proof-table" aria-label="Proof lines">
+          <thead class="sr-only">
+            <tr>
+              <th scope="col">Line</th>
+              <th scope="col">Formula</th>
+              <th scope="col">Justification</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="proof-lines"></tbody>
+        </table>
       </div>
 
       <!-- Entry panel (fixed at bottom) -->
       <div id="entry-panel">
 
         <!-- Symbol toolbar -->
-        <div class="sym-bar">
-          <button class="sym-btn" type="button" onclick="ins('~')" title="Negation (~)">~</button>
-          <button class="sym-btn" type="button" onclick="ins('·')" title="Conjunction (·)  — also type &amp;">·</button>
-          <button class="sym-btn" type="button" onclick="ins('∨')" title="Disjunction (∨)  — also type v">∨</button>
-          <button class="sym-btn" type="button" onclick="ins('⊃')" title="Conditional (⊃) — also type ->">⊃</button>
+        <div class="sym-bar" role="toolbar" aria-label="Formula symbols">
+          <button class="sym-btn" type="button" onclick="ins('~')" title="Negation (~)" aria-label="Insert negation">~</button>
+          <button class="sym-btn" type="button" onclick="ins('·')" title="Conjunction (·)  — also type &amp;" aria-label="Insert conjunction">·</button>
+          <button class="sym-btn" type="button" onclick="ins('∨')" title="Disjunction (∨)  — also type v" aria-label="Insert disjunction">∨</button>
+          <button class="sym-btn" type="button" onclick="ins('⊃')" title="Conditional (⊃) — also type ->" aria-label="Insert conditional">⊃</button>
           <button class="sym-btn" type="button" onclick="ins('≡')"
-            title="Biconditional (≡) — also type &lt;->">≡</button>
+            title="Biconditional (≡) — also type &lt;->" aria-label="Insert biconditional">≡</button>
           <div class="sym-divider"></div>
-          <button class="sym-btn" type="button" onclick="ins('(')" title="Open parenthesis">(</button>
-          <button class="sym-btn" type="button" onclick="ins(')')" title="Close parenthesis">)</button>
+          <button class="sym-btn" type="button" onclick="ins('(')" title="Open parenthesis" aria-label="Insert open parenthesis">(</button>
+          <button class="sym-btn" type="button" onclick="ins(')')" title="Close parenthesis" aria-label="Insert close parenthesis">)</button>
         </div>
 
-        <div class="kbd-hint">
+        <div class="kbd-hint" id="entry-hint">
           Keyboard shortcuts: <kbd>-></kbd> → ⊃ &nbsp; <kbd>&amp;</kbd> → · &nbsp;
           <kbd>v</kbd> → ∨ &nbsp; <kbd>&lt;-></kbd> → ≡ &nbsp; <kbd>[ ]</kbd> → ( )
         </div>
 
         <!-- Formula input -->
         <div class="entry-formula-row">
+          <label class="sr-only" for="formula-input">Formula for the next proof line</label>
           <input id="formula-input" class="formula-input" type="text" placeholder="Enter formula…"
-            onkeydown="if(event.key==='Enter') submitLine()">
+            aria-describedby="entry-hint entry-error" onkeydown="if(event.key==='Enter') submitLine()">
         </div>
 
         <!-- Rule + cited lines -->
         <div class="entry-rule-row">
-          <label>Rule</label>
-          <select id="rule-select" onchange="onRuleChange()">
+          <label for="rule-select">Rule</label>
+          <select id="rule-select" aria-describedby="entry-error" onchange="onRuleChange()">
             <option value="">— select —</option>
             <optgroup label="Implication Rules">
               <option value="MP">MP — Modus Ponens</option>
@@ -857,7 +907,7 @@
           <div class="cited-wrap">
             <label for="cited-input">Lines</label>
             <input id="cited-input" type="text" placeholder="e.g. 1, 2" title="Comma-separated line numbers"
-              onkeydown="if(event.key==='Enter') submitLine()">
+              aria-describedby="entry-error" onkeydown="if(event.key==='Enter') submitLine()">
           </div>
         </div>
 
@@ -871,6 +921,8 @@
           <button class="btn btn-secondary" type="button" onclick="undoLine()">Undo</button>
           <button class="btn btn-danger" type="button" onclick="resetProof()">Reset</button>
         </div>
+        <div id="entry-error" class="line-error" role="alert" hidden></div>
+        <div id="status-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
       </div>
     </section>
@@ -1677,8 +1729,11 @@
 
       const input = document.createElement('input');
       input.type = 'text'; input.className = 'formula-input';
+      input.id = 'premise-input-' + _premiseSeq;
+      input.setAttribute('aria-label', 'Premise ' + _premiseSeq);
+      input.setAttribute('aria-describedby', 'setup-hint setup-error');
       input.placeholder = 'e.g. A ⊃ B'; input.value = value;
-      input.addEventListener('focus', () => { trackFocus(input); });
+      input.addEventListener('focus', () => { trackFocus(input); _hideSetupError(); _clearInvalid(input); });
       input.addEventListener('input', () => normalizeField(input));
       input.addEventListener('keydown', e => { if (e.key === 'Enter') startProof(); });
 
@@ -1711,13 +1766,15 @@
     // ── Panel transitions ──────────────────────────────────────────────────
 
     function startProof() {
+      _hideSetupError();
       const premises = _getPremiseValues();
-      const conclusion = document.getElementById('conclusion-input').value.trim();
-      if (!conclusion) { _flash(document.getElementById('conclusion-input')); return; }
+      const conclusionInput = document.getElementById('conclusion-input');
+      const conclusion = conclusionInput.value.trim();
+      if (!conclusion) { _showSetupError('Enter a conclusion before beginning the proof.', conclusionInput); return; }
 
       let ps;
       try { ps = new ProofState(premises, conclusion); }
-      catch (e) { alert('Setup error — ' + e.message); return; }
+      catch (e) { _showSetupError('Setup error: ' + e.message); return; }
 
       proof = ps;
 
@@ -1783,50 +1840,68 @@
     function _buildLine(line, blockTypes) {
       const depth = line.depth;
       const blockType = line.blockId !== null ? blockTypes[line.blockId] : null;
-      const wrap = document.createElement('div');
+      const frag = document.createDocumentFragment();
+      const wrap = document.createElement('tr');
       wrap.className = 'proof-line' + (line.type === 'assumption' ? ' assumption' : '');
 
-      const numEl = document.createElement('div');
+      const numEl = document.createElement('th');
+      numEl.scope = 'row';
       numEl.className = 'line-num'; numEl.textContent = line.lineNum;
       wrap.appendChild(numEl);
 
-      const body = document.createElement('div');
+      const body = document.createElement('td');
       body.className = 'line-body';
       if (depth > 0) body.classList.add('depth-' + Math.min(depth, 3));
       if (blockType === 'IP') body.classList.add('ip');
+      if (depth > 0) {
+        const depthText = document.createElement('span');
+        depthText.className = 'sr-only';
+        depthText.textContent = 'Subproof depth ' + depth + '. ';
+        body.appendChild(depthText);
+      }
 
-      const main = document.createElement('div');
-      main.className = 'line-main';
-
-      if (line.type === 'assumption' && blockType) main.appendChild(_badge(blockType.toLowerCase(), blockType + '\u202fAss.'));
-      else if (line.type === 'cp') main.appendChild(_badge('cp', 'CP'));
-      else if (line.type === 'ip') main.appendChild(_badge('ip', 'IP'));
+      if (line.type === 'assumption' && blockType) body.appendChild(_badge(blockType.toLowerCase(), blockType + '\u202fAss.'));
+      else if (line.type === 'cp') body.appendChild(_badge('cp', 'CP'));
+      else if (line.type === 'ip') body.appendChild(_badge('ip', 'IP'));
 
       const fml = document.createElement('span');
       fml.className = 'line-formula';
       fml.textContent = (line.valid && line.ast) ? astToStringDisplay(line.ast) : line.rawFormula;
-      main.appendChild(fml);
+      body.appendChild(fml);
+      wrap.appendChild(body);
 
-      const just = document.createElement('span');
-      just.className = 'line-just';
-      just.textContent = _formatJust(line);
-      main.appendChild(just);
+      const just = document.createElement('td');
+      just.className = 'line-just-cell';
+      const justText = document.createElement('span');
+      justText.className = 'line-just';
+      justText.textContent = _formatJust(line);
+      just.appendChild(justText);
+      wrap.appendChild(just);
 
+      const statusCell = document.createElement('td');
+      statusCell.className = 'line-status-cell';
       if (line.type !== 'premise') {
         const status = document.createElement('span');
         status.className = 'line-status ' + (line.valid ? 'ok' : 'err');
         status.textContent = line.valid ? '✓' : '✗';
-        main.appendChild(status);
+        status.setAttribute('aria-label', line.valid ? 'valid line' : 'line has an error');
+        statusCell.appendChild(status);
       }
+      wrap.appendChild(statusCell);
+      frag.appendChild(wrap);
 
-      body.appendChild(main);
       if (!line.valid && line.message) {
+        const errRow = document.createElement('tr');
+        errRow.className = 'proof-line-error';
+        const errCell = document.createElement('td');
+        errCell.colSpan = 4;
         const err = document.createElement('div');
         err.className = 'line-error'; err.textContent = line.message;
-        body.appendChild(err);
+        errCell.appendChild(err);
+        errRow.appendChild(errCell);
+        frag.appendChild(errRow);
       }
-      wrap.appendChild(body);
-      return wrap;
+      return frag;
     }
 
     function _badge(cls, text) {
@@ -1886,20 +1961,22 @@
       const formula = document.getElementById('formula-input').value.trim();
       const rule = document.getElementById('rule-select').value;
       const cited = _parseCited(document.getElementById('cited-input').value);
-      if (!formula) { _flash(document.getElementById('formula-input')); return; }
-      if (!rule) { _flash(document.getElementById('rule-select')); return; }
-      proof.addLine(formula, rule, cited);
+      if (!formula) { _showEntryError('Enter a formula for the next proof line.', document.getElementById('formula-input')); return; }
+      if (!rule) { _showEntryError('Choose a rule before adding the line.', document.getElementById('rule-select')); return; }
+      const result = proof.addLine(formula, rule, cited);
       _clearEntry(); renderProof();
+      if (result.valid) _announce('Line ' + result.line.lineNum + ' added.' + (proof.isComplete() ? ' Proof complete.' : ''));
+      else _announce('Line ' + result.line.lineNum + ' has an error: ' + result.message);
     }
 
     function openSubproof(type) {
       if (!proof) return;
       _hideEntryError();
       const formula = document.getElementById('formula-input').value.trim();
-      if (!formula) { _flash(document.getElementById('formula-input')); return; }
+      if (!formula) { _showEntryError('Enter the assumption for the subproof.', document.getElementById('formula-input')); return; }
       const result = proof.openSubproof(formula, type);
       if (!result.valid) _showEntryError(result.message);
-      else _clearEntry();
+      else { _clearEntry(); _announce(type + ' subproof opened at line ' + result.line.lineNum + '.'); }
       renderProof();
     }
 
@@ -1908,22 +1985,22 @@
       _hideEntryError();
       const formula = document.getElementById('formula-input').value.trim();
       const cited = _parseCited(document.getElementById('cited-input').value);
-      if (!formula) { _flash(document.getElementById('formula-input')); return; }
+      if (!formula) { _showEntryError('Enter the line that closes the subproof.', document.getElementById('formula-input')); return; }
       const result = proof.closeSubproof(formula, cited);
       if (!result.valid) _showEntryError(result.message);
-      else _clearEntry();
+      else { _clearEntry(); _announce('Subproof closed at line ' + result.line.lineNum + '.'); }
       renderProof();
     }
 
     function undoLine() {
       if (!proof) return;
-      _hideEntryError(); proof.removeLast(); renderProof();
+      _hideEntryError(); proof.removeLast(); renderProof(); _announce('Last line removed.');
     }
 
     function resetProof() {
       if (!proof) return;
       if (!confirm('Reset proof? All derived lines will be removed.')) return;
-      _hideEntryError(); proof.reset(); renderProof();
+      _hideEntryError(); proof.reset(); renderProof(); _announce('Proof reset. Derived lines removed.');
     }
 
     // ── Entry panel helpers ────────────────────────────────────────────────
@@ -1932,38 +2009,73 @@
       document.getElementById('formula-input').value = '';
       document.getElementById('cited-input').value = '';
       document.getElementById('rule-select').value = '';
+      _clearInvalid(document.getElementById('formula-input'));
+      _clearInvalid(document.getElementById('rule-select'));
+      _clearInvalid(document.getElementById('cited-input'));
       document.getElementById('formula-input').focus();
     }
 
-    function _flash(el) {
+    function _setInvalid(el) {
+      if (!el) return;
+      el.setAttribute('aria-invalid', 'true');
       el.style.setProperty('border-color', 'var(--red)');
       el.style.setProperty('box-shadow', '0 0 0 3px rgba(185,28,28,.18)');
       el.focus();
-      setTimeout(() => { el.style.removeProperty('border-color'); el.style.removeProperty('box-shadow'); }, 1400);
     }
 
-    let _entryErrEl = null;
-    function _showEntryError(msg) {
-      _hideEntryError();
-      _entryErrEl = document.createElement('div');
-      _entryErrEl.className = 'line-error'; _entryErrEl.style.marginBottom = '8px';
-      _entryErrEl.textContent = msg;
-      const panel = document.getElementById('entry-panel');
-      panel.insertBefore(_entryErrEl, panel.firstChild);
+    function _clearInvalid(el) {
+      if (!el) return;
+      el.removeAttribute('aria-invalid');
+      el.style.removeProperty('border-color');
+      el.style.removeProperty('box-shadow');
     }
-    function _hideEntryError() { if (_entryErrEl) { _entryErrEl.remove(); _entryErrEl = null; } }
+
+    function _showEntryError(msg, target = null) {
+      const err = document.getElementById('entry-error');
+      err.textContent = msg;
+      err.hidden = false;
+      if (target) _setInvalid(target);
+      _announce(msg);
+    }
+
+    function _hideEntryError() {
+      const err = document.getElementById('entry-error');
+      err.textContent = '';
+      err.hidden = true;
+    }
+
+    function _showSetupError(msg, target = null) {
+      const err = document.getElementById('setup-error');
+      err.textContent = msg;
+      err.hidden = false;
+      if (target) _setInvalid(target);
+      _announce(msg);
+    }
+
+    function _hideSetupError() {
+      const err = document.getElementById('setup-error');
+      err.textContent = '';
+      err.hidden = true;
+      _clearInvalid(document.getElementById('conclusion-input'));
+      document.querySelectorAll('#premise-list .formula-input').forEach(_clearInvalid);
+    }
+
+    function _announce(msg) {
+      const region = document.getElementById('status-region');
+      if (region) region.textContent = msg;
+    }
 
     // ── Initialization ─────────────────────────────────────────────────────
 
     (function init() {
       // Wire proof-panel formula input
       const fmlInput = document.getElementById('formula-input');
-      fmlInput.addEventListener('focus', () => { trackFocus(fmlInput); _hideEntryError(); });
+      fmlInput.addEventListener('focus', () => { trackFocus(fmlInput); _hideEntryError(); _clearInvalid(fmlInput); });
       fmlInput.addEventListener('input', () => normalizeField(fmlInput));
 
       // Wire setup-panel conclusion input
       const conInput = document.getElementById('conclusion-input');
-      conInput.addEventListener('focus', () => { trackFocus(conInput); });
+      conInput.addEventListener('focus', () => { trackFocus(conInput); _hideSetupError(); _clearInvalid(conInput); });
       conInput.addEventListener('input', () => normalizeField(conInput));
 
       // ── Load a problem from URL parameters (sent by problems1.html) ──────────

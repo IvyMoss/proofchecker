@@ -472,20 +472,20 @@
         <!-- Rules selector -->
         <div class="selector-section">
           <h2>Rules in Play</h2>
-          <div class="sel-row" id="rules-row">
-            <button class="sel-btn active" data-rules="first4" onclick="selectRules('first4')">
+          <div class="sel-row" id="rules-row" role="group" aria-label="Rules in play">
+            <button class="sel-btn active" data-rules="first4" aria-pressed="true" onclick="selectRules('first4')">
               <span class="sel-name">Basic</span>
               <span class="sel-sub">MP · MT · HS · DS</span>
             </button>
-            <button class="sel-btn" data-rules="all8" onclick="selectRules('all8')">
+            <button class="sel-btn" data-rules="all8" aria-pressed="false" onclick="selectRules('all8')">
               <span class="sel-name">Implication</span>
               <span class="sel-sub">All 8 implication rules</span>
             </button>
-            <button class="sel-btn" data-rules="all18" onclick="selectRules('all18')">
+            <button class="sel-btn" data-rules="all18" aria-pressed="false" onclick="selectRules('all18')">
               <span class="sel-name">Full</span>
               <span class="sel-sub">All 18 rules</span>
             </button>
-            <button class="sel-btn" data-rules="extended" onclick="selectRules('extended')">
+            <button class="sel-btn" data-rules="extended" aria-pressed="false" onclick="selectRules('extended')">
               <span class="sel-name">Extended</span>
               <span class="sel-sub">18 rules + CP &amp; IP</span>
             </button>
@@ -495,20 +495,20 @@
         <!-- Difficulty selector -->
         <div class="selector-section">
           <h2>Difficulty</h2>
-          <div class="sel-row" id="diff-row">
-            <button class="sel-btn active" data-diff="1" onclick="selectDiff(1)">
+          <div class="sel-row" id="diff-row" role="group" aria-label="Difficulty">
+            <button class="sel-btn active" data-diff="1" aria-pressed="true" onclick="selectDiff(1)">
               <span class="sel-name">Easy</span>
               <span class="sel-sub">1–2 steps</span>
             </button>
-            <button class="sel-btn" data-diff="2" onclick="selectDiff(2)">
+            <button class="sel-btn" data-diff="2" aria-pressed="false" onclick="selectDiff(2)">
               <span class="sel-name">Medium</span>
               <span class="sel-sub">2–3 steps</span>
             </button>
-            <button class="sel-btn" data-diff="3" onclick="selectDiff(3)">
+            <button class="sel-btn" data-diff="3" aria-pressed="false" onclick="selectDiff(3)">
               <span class="sel-name">Hard</span>
               <span class="sel-sub">3–4 steps</span>
             </button>
-            <button class="sel-btn" data-diff="4" onclick="selectDiff(4)">
+            <button class="sel-btn" data-diff="4" aria-pressed="false" onclick="selectDiff(4)">
               <span class="sel-name">Extreme</span>
               <span class="sel-sub">4+ steps</span>
             </button>
@@ -677,14 +677,18 @@
     function selectRules(key) {
       currentRules = key;
       document.querySelectorAll('#rules-row .sel-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.rules === key);
+        const selected = b.dataset.rules === key;
+        b.classList.toggle('active', selected);
+        b.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
     }
 
     function selectDiff(n) {
       currentDiff = n;
       document.querySelectorAll('#diff-row .sel-btn').forEach(b => {
-        b.classList.toggle('active', parseInt(b.dataset.diff) === n);
+        const selected = parseInt(b.dataset.diff) === n;
+        b.classList.toggle('active', selected);
+        b.setAttribute('aria-pressed', selected ? 'true' : 'false');
       });
     }
 
